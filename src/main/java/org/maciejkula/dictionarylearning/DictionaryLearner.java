@@ -23,7 +23,7 @@ public class DictionaryLearner implements Writable {
 	private int numberOfFeatures;
 
 	private final Transformer transformer;
-	private Matrix dictionaryMatrix;
+	private SparseColumnMatrix dictionaryMatrix;
 
 	public DictionaryLearner(int numberOfAtoms, int numberOfFeatures, Transformer transformer) {
 		this.numberOfAtoms = numberOfAtoms;
@@ -31,10 +31,6 @@ public class DictionaryLearner implements Writable {
 
 		this.transformer = transformer;
 		this.dictionaryMatrix = this.createEmptyDictionaryMatrix();
-
-		System.out.println(String.format("Number of atoms %s", this.numberOfAtoms));
-		System.out.println(String.format("Number of features %s", this.numberOfFeatures));
-		System.out.println(String.format("Rows %s, columns %s", this.dictionaryMatrix.numRows(), this.dictionaryMatrix.numCols()));
 	}
 
 	public DictionaryLearner(Transformer transformer) {
@@ -65,27 +61,54 @@ public class DictionaryLearner implements Writable {
 		return this.l2Penalty;
 	}
 
-	private Matrix createEmptyDictionaryMatrix() {
-		return new SparseColumnMatrix(this.numberOfFeatures, this.numberOfAtoms);
+	public Matrix getDictionary() {
+		return this.dictionaryMatrix;
 	}
 
+	/*
+	 * Project the datapoint on the dictionary.
+	 */
 	public Vector transform(Vector datapoint) {
 		return this.transformer.transform(datapoint, this.dictionaryMatrix);
 	}
 
+	/*
+	 * Reconstruct a datapoint from its projection on the dictionary.
+	 */
 	public Vector inverseTransform(Vector datapoint) {
 		return this.transformer.inverseTransform(datapoint, this.dictionaryMatrix);
 	}
-	
-	public void normalizeAtoms() {
+
+	/*
+	 * Perform an online update of the dictionary using a datapoint.
+	 * 
+	 * Returns the datapoint's projection on the dictionary atoms.
+	 */
+	public Vector train(Vector datapoint) {
+		this.initializeAtoms(datapoint);		
+		Vector projection = this.transformer.transform(datapoint, this.dictionaryMatrix);
+
 		for (int i=0; i < this.numberOfAtoms; i++) {
 			Vector atom = this.dictionaryMatrix.viewColumn(i);
-			double atomL2Norm = atom.norm(2);
-			atom.assign(atom.times(1/(Math.max(atomL2Norm, 1))));
+			double projectionWeight = projection.get(i);
+			Vector difference = atom.minus(datapoint);
+			for (Element elem : difference.nonZeroes()) {
+				atom.incrementQuick(elem.index(), - this.learningRate * projectionWeight * elem.get());
+			}
 		}
+		this.regularize();
+		
+		return projection;
 	}
 
-	public void regularize() {
+	private SparseColumnMatrix createEmptyDictionaryMatrix() {
+		return new SparseColumnMatrix(this.numberOfFeatures, this.numberOfAtoms);
+	}
+
+	/*
+	 * Apply L2 and L1 regularization to dictionary items.
+	 */
+	private void regularize() {
 		for (int i=0; i < this.numberOfAtoms; i++) {
 			Vector atom = this.dictionaryMatrix.viewColumn(i);
 			List<Integer> indicesToRemove = new ArrayList<Integer>();
@@ -106,36 +129,18 @@ public class DictionaryLearner implements Writable {
 		}
 	}
 
-	public void train(Vector datapoint) {
-		this.initializeAtoms(datapoint);		
-		Vector projection = this.transformer.transform(datapoint, this.dictionaryMatrix);
-		
-		for (int i=0; i < this.numberOfAtoms; i++) {
-			Vector atom = this.dictionaryMatrix.viewColumn(i);
-			double projectionWeight = projection.get(i);
-			Vector difference = atom.minus(datapoint);
-			for (Element elem : difference.nonZeroes()) {
-				atom.incrementQuick(elem.index(), -this.learningRate * projectionWeight * elem.get());
-			}
-		}		
-		this.regularize();
-		this.normalizeAtoms();
-	}
-
-
+	/*
+	 * Initialize atoms: atoms with zero nonzero entries (whether
+	 * not initialized or shrunk to zero) are replaced with datapoints.
+	 */
 	private void initializeAtoms(Vector datapoint) {
 		for (int i=0; i < this.numberOfAtoms; i++) {
 			Vector column =  this.dictionaryMatrix.viewColumn(i);
 			if (column.getNumNonZeroElements() == 0) {
-				System.out.println("Replacing an atom");
 				column.assign(datapoint);
 				break;
 			}
 		}
-	}
-
-	public Matrix getDictionary() {
-		return this.dictionaryMatrix;
 	}
 
 	@Override
@@ -146,7 +151,7 @@ public class DictionaryLearner implements Writable {
 		this.numberOfAtoms = input.readInt();
 		this.numberOfFeatures = input.readInt();
 		this.transformer.readFields(input);
-		this.dictionaryMatrix = MatrixWritable.readMatrix(input);     
+		this.dictionaryMatrix = (SparseColumnMatrix) MatrixWritable.readMatrix(input);     
 	}
 
 	@Override

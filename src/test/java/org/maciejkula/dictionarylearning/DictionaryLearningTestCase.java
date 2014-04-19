@@ -56,7 +56,7 @@ public class DictionaryLearningTestCase extends TestCase {
     public void testAccuracy() {
 
         Matrix matrix = sparsifyData(readData());
-        int numAtoms = 10;
+        int numAtoms = 20;
         DictionaryLearner dictionaryLearner = new DictionaryLearner(numAtoms, matrix.columnSize(), new LSMRTransformer());
         dictionaryLearner.setL1Penalty(0.15);
         dictionaryLearner.setL2Penalty(0.01);
