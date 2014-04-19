@@ -4,6 +4,7 @@ import org.apache.mahout.math.DenseMatrix;
 import org.apache.mahout.math.DenseVector;
 import org.apache.mahout.math.Matrix;
 import org.apache.mahout.math.RandomAccessSparseVector;
+import org.apache.mahout.math.SparseColumnMatrix;
 import org.apache.mahout.math.Vector;
 import org.apache.mahout.math.Vector.Element;
 
@@ -20,7 +21,7 @@ public class MathUtils {
 	 * 
 	 * Returns the dense result of A'A. 
 	 */
-    public static Matrix transposedDictionaryTimesDictionary(Matrix dictionary) {
+    public static Matrix transposedDictionaryTimesDictionary(SparseColumnMatrix dictionary) {
     	Matrix output = new DenseMatrix(dictionary.numCols(), dictionary.numCols());
     	for (int i=0; i < dictionary.numCols(); i++) {
     		for (int j=0; j < dictionary.numCols(); j++) {
@@ -42,7 +43,7 @@ public class MathUtils {
      * 
      * Returns the dense result of A'y.
      */
-    public static Vector transposedDictionaryTimesDatapoint(Matrix dictionary, Vector datapoint) {
+    public static Vector transposedDictionaryTimesDatapoint(SparseColumnMatrix dictionary, Vector datapoint) {
     	Vector output = new DenseVector(dictionary.numCols());
     	for (int i=0; i < dictionary.numCols(); i++) {
     		Vector row = dictionary.viewColumn(i);
@@ -55,7 +56,7 @@ public class MathUtils {
     	return output;
     }
     
-    public static Vector inverseTransform(Matrix dictionary, Vector projection) {
+    public static Vector inverseTransform(SparseColumnMatrix dictionary, Vector projection) {
     	Vector output = new RandomAccessSparseVector(dictionary.numRows());
     	for (int i=0; i < dictionary.numCols(); i++) {
     		Vector atom = dictionary.viewColumn(i);
