@@ -151,7 +151,8 @@ public class DictionaryLearner implements Writable {
 		this.numberOfAtoms = input.readInt();
 		this.numberOfFeatures = input.readInt();
 		this.transformer.readFields(input);
-		this.dictionaryMatrix = (SparseColumnMatrix) MatrixWritable.readMatrix(input);     
+		this.dictionaryMatrix = this.createEmptyDictionaryMatrix();
+		this.dictionaryMatrix.assign(MatrixWritable.readMatrix(input));     
 	}
 
 	@Override
@@ -161,7 +162,7 @@ public class DictionaryLearner implements Writable {
 		output.writeDouble(l2Penalty);
 		output.writeInt(numberOfAtoms);
 		output.writeInt(numberOfFeatures);
-		this.transformer.write(output);
+		this.transformer.write(output);;
 		MatrixWritable.writeMatrix(output, dictionaryMatrix);
 	}
 
