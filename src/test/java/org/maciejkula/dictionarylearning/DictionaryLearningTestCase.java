@@ -56,20 +56,15 @@ public class DictionaryLearningTestCase extends TestCase {
     public void testAccuracy() {
 
         Matrix matrix = sparsifyData(readData());
-        int numAtoms = 100;
+        int numAtoms = 10;
         DictionaryLearner dictionaryLearner = new DictionaryLearner(numAtoms, matrix.columnSize(), new LSMRTransformer());
-        dictionaryLearner.setL1Penalty(0.0015);
-        dictionaryLearner.setL2Penalty(0.0);
-        dictionaryLearner.setRegularizationStep(1);
+        dictionaryLearner.setL1Penalty(0.15);
+        dictionaryLearner.setL2Penalty(0.01);
 
         System.out.println("doing stuff");
 
         for (Vector row : matrix) {
             dictionaryLearner.train(row);
-            System.out.println("Trained one");
-            // System.out.println(dictionaryLearner.transform(row));
-            // System.out.println(dictionaryLearner.inverseTransform(dictionaryLearner.transform(row)));
-            // System.out.println(row);
         }
         
         System.out.println("Printing the dictionary");
