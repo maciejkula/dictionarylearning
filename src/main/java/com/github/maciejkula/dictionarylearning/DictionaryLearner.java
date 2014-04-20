@@ -117,7 +117,7 @@ public class DictionaryLearner implements Writable {
 						* (elem.get() 
 								* this.l2Penalty
 								+ this.l1Penalty * Math.signum(elem.get())));
-				if (Math.abs(regularizedValue) < this.l1Penalty) {
+				if (regularizedValue == 0.0 || Math.abs(regularizedValue) < this.l1Penalty) {
 					indicesToRemove.add(elem.index());
 				} else {
 					atom.setQuick(elem.index(), regularizedValue);
