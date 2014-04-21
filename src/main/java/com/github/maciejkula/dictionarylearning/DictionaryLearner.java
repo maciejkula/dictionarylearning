@@ -97,6 +97,7 @@ public class DictionaryLearner implements Writable {
 			}
 		}
 		this.regularize();
+		this.transformer.clearCaches();		
 		
 		return projection;
 	}
@@ -138,6 +139,7 @@ public class DictionaryLearner implements Writable {
 			Vector column =  this.dictionaryMatrix.viewColumn(i);
 			if (column.getNumNonZeroElements() == 0) {
 				column.assign(datapoint);
+				this.transformer.clearCaches();
 				break;
 			}
 		}

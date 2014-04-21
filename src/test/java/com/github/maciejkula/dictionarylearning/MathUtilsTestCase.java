@@ -9,8 +9,6 @@ import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.SparseColumnMatrix;
 import org.apache.mahout.math.Vector;
 
-import com.github.maciejkula.dictionarylearning.MathUtils;
-
 public class MathUtilsTestCase extends TestCase {
 	
 	private static Vector createRandomVector(int cardinality, double density) {
@@ -72,5 +70,4 @@ public class MathUtilsTestCase extends TestCase {
 		assertTrue(assertVectorsEqual(MathUtils.inverseTransform(matrix, vector),
 				matrix.times(vector)));
 	}
-
 }

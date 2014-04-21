@@ -8,6 +8,7 @@ public interface Transformer extends Writable{
     
     public Vector transform(Vector datapoint, SparseColumnMatrix dictionary);
     public Vector inverseTransform(Vector projection, SparseColumnMatrix dictionary);
+    public void clearCaches();
     
 
 }
