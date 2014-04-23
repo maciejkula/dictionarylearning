@@ -46,6 +46,20 @@ public class EvaluationUtils {
         }
 
     }
+    
+    public static double computeAverageNonzeroElementPercentageRank(Vector inputVector, Vector ranking) {
+        return computeAverageNonzeroElementRank(inputVector, ranking)/inputVector.size();
+    }
+    
+    public static double computeAverageNonzeroElementRank(Vector inputVector, Vector ranking) {
+        RankMap rankMap = getRankMap(ranking);
+        double averageRank = 0.0;
+        for (Element elem : inputVector.nonZeroes()) {
+            averageRank += rankMap.get(elem.index());
+        }
+        averageRank = averageRank / inputVector.getNumNonZeroElements();
+        return averageRank;
+    }
 
     public static RankMap getRankMap(Vector scores) {
         List<Element> elements = new ArrayList<Element>(scores.getNumNonZeroElements());
@@ -68,7 +82,7 @@ public class EvaluationUtils {
                 rankMap.put(elem.index(), numZeroes + i);
             }
         }
-        rankMap.setRankOfZeroElement(numAboveZero);
+        rankMap.setRankOfZeroElement(numAboveZero + Math.round(numZeroes/2));
 
         return rankMap;
     }
