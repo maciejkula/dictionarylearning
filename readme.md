@@ -56,17 +56,11 @@ System.out.println(String.format("Finished training in %s ms", System.currentTim
 ```
 
 After training, the rank decreases to around 0.04, showing an improvement over the (admittedly not very demanding) random baseline:
-```java
-double testSetAverageRank = 0.0;
-int testSetUsers = 0;
-for (Vector row : testData) {
-    if (row.getNumNonZeroElements() > 0) {
-        testSetUsers++;
-        testSetAverageRank += EvaluationUtils.computeAverageNonzeroElementPercentageRank(row, 
-                              dictionaryLearner.inverseTransform(dictionaryLearner.transform(row)));
-    }
-}
-testSetAverageRank = testSetAverageRank/testSetUsers;
+```shell
+Looking for u1.base and u1.test in /home/maciej/workspace/dictionarylearning
+Finished loading data. Starting training.
+Finished training in 283547 ms
+Average rank in training set: 0.04176977794906601,  average rank in test set 0.037144872790977536.
 ```
 
 To run the the example, run the following to get the MovieLens 100K dataset from the GroupLens website and execute the training code:
