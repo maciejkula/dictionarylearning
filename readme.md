@@ -43,14 +43,38 @@ This is where dictionary learning comes in. Since the learned dictionary is a go
 
 This example uses the implicit feedback form of the MovieLens dataset: rows in the data matrix represent users, columns represent movies. An entry is 1 if a user has rated a given movie, 0 otherwise. The data is split into a training and a test set. The metric used is the average rank of relevant items: an item has rank 0 if it is the most highly recommended item, and 1 if it is the least recommended item. A good recommendation system will make the rank of relevant items (1s in our data matrix) as low as possible.
 
-For the first run, we don't run any training iterations, leading to a score of 0.5 (as expected for random recommendations):
+If we do not perform any training, we obtain a score of 0.5 (as expected for random recommendations). We can then set some parameters and go through the training examples:
+```java
+DictionaryLearner dictionaryLearner = new DictionaryLearner(256, numMovies, new LSMRTransformer());
+dictionaryLearner.setL1Penalty(0.15);
+        
+Long trainingStartTime = System.currentTimeMillis();
+for (Vector row : trainingData) {
+    dictionaryLearner.train(row);
+    }
+System.out.println(String.format("Finished training in %s ms", System.currentTimeMillis() - trainingStartTime));
+```
 
-After training, the rank decreases to around 0.05, showing an improvement over the (admittedly not very demanding) random baseline:
+After training, the rank decreases to around 0.04, showing an improvement over the (admittedly not very demanding) random baseline:
+```java
+double testSetAverageRank = 0.0;
+int testSetUsers = 0;
+for (Vector row : testData) {
+    if (row.getNumNonZeroElements() > 0) {
+        testSetUsers++;
+        testSetAverageRank += EvaluationUtils.computeAverageNonzeroElementPercentageRank(row, 
+                              dictionaryLearner.inverseTransform(dictionaryLearner.transform(row)));
+    }
+}
+testSetAverageRank = testSetAverageRank/testSetUsers;
+```
 
-
-
-
-
+To run the the example, run the following to get the MovieLens 100K dataset from the GroupLens website and execute the training code:
+```shell
+wget http://files.grouplens.org/datasets/movielens/ml-100k.zip && unzip ml-100k.zip
+mv ml-100k/u1.base ./ && mv ml-100k/u1.test ./
+mvn exec:java -Dexec.mainClass="com.github.maciejkula.dictionarylearning.MovieLensExample"
+```
 
 # Install
 

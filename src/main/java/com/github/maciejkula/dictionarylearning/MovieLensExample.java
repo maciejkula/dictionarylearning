@@ -68,13 +68,15 @@ public class MovieLensExample {
     public static void main(String[] args) {
         
         Path currentRelativePath = Paths.get("");
-        String s = currentRelativePath.toAbsolutePath().toString();
-        System.out.println("Current relative path is: " + s);
+        String path = currentRelativePath.toAbsolutePath().toString();
+        System.out.println("Looking for u1.base and u1.test in " + path);
         
         Matrix trainingData = createRatingMatrix("u1.base");
         Matrix testData = createRatingMatrix("u1.test");
         
-        DictionaryLearner dictionaryLearner = new DictionaryLearner(128, numMovies, new LSMRTransformer());
+        System.out.println("Finished loading data. Starting training.");
+        
+        DictionaryLearner dictionaryLearner = new DictionaryLearner(256, numMovies, new LSMRTransformer());
         dictionaryLearner.setL1Penalty(0.15);
         
         Long trainingStartTime = System.currentTimeMillis();
@@ -83,15 +85,10 @@ public class MovieLensExample {
         }
         System.out.println(String.format("Finished training in %s ms", System.currentTimeMillis() - trainingStartTime));
         
-        //System.out.println("Printing the dictionary");
-        //for (int i = 0; i < dictionaryLearner.getDictionary().numCols(); i++) {
-        //    System.out.println(dictionaryLearner.getDictionary().viewColumn(i));
-        //}
-        // System.out.println("Finished printing the dictionary");
-        
         double trainingSetAverageRank = 0.0;
         for (Vector row : trainingData) {
-            trainingSetAverageRank += EvaluationUtils.computeAverageNonzeroElementPercentageRank(row, dictionaryLearner.inverseTransform(dictionaryLearner.transform(row)));
+            trainingSetAverageRank += EvaluationUtils.computeAverageNonzeroElementPercentageRank(row, 
+            		dictionaryLearner.inverseTransform(dictionaryLearner.transform(row)));
         }
         trainingSetAverageRank = trainingSetAverageRank/numUsers;
         
@@ -100,12 +97,14 @@ public class MovieLensExample {
         for (Vector row : testData) {
             if (row.getNumNonZeroElements() > 0) {
                 testSetUsers++;
-                testSetAverageRank += EvaluationUtils.computeAverageNonzeroElementPercentageRank(row, dictionaryLearner.inverseTransform(dictionaryLearner.transform(row)));
+                testSetAverageRank += EvaluationUtils.computeAverageNonzeroElementPercentageRank(row, 
+                		dictionaryLearner.inverseTransform(dictionaryLearner.transform(row)));
             }
         }
         testSetAverageRank = testSetAverageRank/testSetUsers;
         
-        System.out.println(String.format("Average rank in training set: %s,  average rank in test set %s.", trainingSetAverageRank, testSetAverageRank));
+        System.out.println(String.format("Average rank in training set: %s,  average rank in test set %s.", 
+        		trainingSetAverageRank, testSetAverageRank));
     }
 
 }
