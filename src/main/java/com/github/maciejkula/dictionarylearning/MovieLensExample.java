@@ -9,7 +9,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.mahout.math.DenseMatrix;
 import org.apache.mahout.math.Matrix;
+import org.apache.mahout.math.RandomAccessSparseVector;
 import org.apache.mahout.math.SparseRowMatrix;
 import org.apache.mahout.math.Vector;
 
@@ -55,6 +57,57 @@ public class MovieLensExample {
             this.movieId = movieId - 1;
             this.rating = rating;
         }  
+    }
+    
+    /*
+     * Toy implementation of a basic neighbourhood-based collaborative filtering recommender,
+     * where recommendations for user X are a sum over all user vectors weighted by the cosine
+     * of the angle between the user vectors and X's user vector.
+     * 
+     */
+    public static class NeighbourhoodCF {
+    	
+    	private final Matrix transposedDataMatrix;
+    	private final Matrix similarityMatrix;
+    	
+    	public NeighbourhoodCF(Matrix dataMatrix) {
+    		this.transposedDataMatrix = new DenseMatrix(dataMatrix.numCols(), dataMatrix.numRows());
+    		this.transposedDataMatrix.assign(dataMatrix.transpose());
+    		this.similarityMatrix = this.computeSimilarityMatrix(dataMatrix);
+    	}
+    	
+    	public Vector getRecommendations(int userId) {
+    		Vector similarities = this.similarityMatrix.viewRow(userId);
+    		return new RandomAccessSparseVector(this.transposedDataMatrix.times(similarities));
+    	}
+    	
+    	/*
+    	 * Calculate the cosine of the angle between the two vectors.
+    	 */
+    	public double computeSimilarity(Vector a, Vector b, double aNorm, double bNorm) {
+    		return a.dot(b) / (aNorm * bNorm);
+    	}
+    	
+    	public Matrix computeSimilarityMatrix(Matrix dataMatrix) {
+    		
+    		DenseMatrix similarityMatrix = new DenseMatrix(dataMatrix.numRows(), dataMatrix.numRows());
+    		double[] norms = new double[dataMatrix.numRows()];
+    		for (int i=0; i < dataMatrix.numRows(); i++) {
+    			norms[i] = dataMatrix.viewRow(i).norm(2);
+    		}
+    		
+    		for (int i=0; i < dataMatrix.numRows(); i++) {
+    			for (int j=i; j < dataMatrix.numRows(); j++) {
+    				double similarity = 0.0;
+    				if (i != j) {
+    					similarity = computeSimilarity(dataMatrix.viewRow(i), dataMatrix.viewRow(j), norms[i], norms[j]);
+    				}
+    				similarityMatrix.setQuick(i, j, similarity);
+    				similarityMatrix.setQuick(j, i, similarity);
+    			}
+    		}
+    		return similarityMatrix;
+    	}
     }
     
     private static Matrix createRatingMatrix(String filename) {
@@ -103,7 +156,35 @@ public class MovieLensExample {
         }
         testSetAverageRank = testSetAverageRank/testSetUsers;
         
-        System.out.println(String.format("Average rank in training set: %s,  average rank in test set %s.", 
+        System.out.println(String.format("Dictionary learning average rank in training set: %s,  average rank in test set %s.", 
+        		trainingSetAverageRank, testSetAverageRank));
+        
+        // Do the same for neighbourhood-based recommendations
+		System.out.println("Computing similarity matrix");
+        NeighbourhoodCF nCF = new NeighbourhoodCF(trainingData);
+		System.out.println("Similarity matrix computed");
+        
+        trainingSetAverageRank = 0.0;
+        for (int i=0; i < trainingData.numRows(); i++) {
+            trainingSetAverageRank += EvaluationUtils.computeAverageNonzeroElementPercentageRank(trainingData.viewRow(i), 
+            		nCF.getRecommendations(i));
+        }
+        trainingSetAverageRank = trainingSetAverageRank/numUsers;
+        
+        testSetAverageRank = 0.0;
+        testSetUsers = 0;
+        for (int i=0; i < testData.numRows(); i++) {
+        	Vector row = testData.viewRow(i);
+            if (row.getNumNonZeroElements() > 0) {
+            	testSetUsers++;
+            	double score = EvaluationUtils.computeAverageNonzeroElementPercentageRank(row, 
+            			nCF.getRecommendations(i));
+            	testSetAverageRank += score;
+            }
+        }
+        testSetAverageRank = testSetAverageRank/testSetUsers;
+        
+        System.out.println(String.format("Neighbourhood CF average rank in training set: %s,  average rank in test set %s.", 
         		trainingSetAverageRank, testSetAverageRank));
     }
 
