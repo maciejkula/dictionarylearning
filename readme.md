@@ -63,6 +63,14 @@ Finished training in 283547 ms
 Average rank in training set: 0.04176977794906601,  average rank in test set 0.037144872790977536.
 ```
 
+We can also compare this result to that obtained using a toy implementation of the similarity-based recommender described above:
+```shell
+Computing similarity matrix
+Similarity matrix computed
+Neighbourhood CF average rank in training set: 0.11978909405580541,  average rank in test set 0.13407374362450342.
+```
+Again, dictionary learning seems to do better.
+
 To run the the example, run the following to get the MovieLens 100K dataset from the GroupLens website and execute the training code:
 ```shell
 wget http://files.grouplens.org/datasets/movielens/ml-100k.zip && unzip ml-100k.zip
